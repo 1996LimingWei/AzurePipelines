@@ -1,4 +1,13 @@
-# This yaml is used to configure the pipeline to restore and build the PerfEval project in the azure DevOps environment. 
+# This yaml is used to configure the onbranch pipeline to restore and build the PerfEval project in the azure DevOps environment. 
+#################################################################################
+#                               OneBranch Pipelines                             #
+# This pipeline was created by EasyStart from a sample located at:              #
+#   https://aka.ms/obpipelines/easystart/samples                                #
+# Documentation:  https://aka.ms/obpipelines                                    #
+# Yaml Schema:    https://aka.ms/obpipelines/yaml/schema                        #
+# Retail Tasks:   https://aka.ms/obpipelines/tasks                              #
+# Support:        https://aka.ms/onebranchsup                                   #
+#################################################################################
 trigger: none
 
 variables:

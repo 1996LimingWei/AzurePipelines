@@ -1,32 +1,29 @@
-$retryCount = 5
+$retryCount = 3
 $retryDelaySeconds = 5
 
+$summaryFilePath = "$(System.DefaultWorkingDirectory)/_GenderDebias-PullRequest/drop_linux_stage_linux_job/PerformanceEvaluation/Output/Summary.txt"
+
 $retryAttempts = 0
-$retryException = $null
 
 while ($retryAttempts -lt $retryCount) {
-    try {
-        dotnet GenderDebias.PerformanceEvaluation.dll prod Output "$(System.DefaultWorkingDirectory)/_GenderDebias-PullRequest/drop_linux_stage_linux_job/test_sets" -1
-
-        # If the script execution is successful, break the loop
+    # Check if Summary.txt file exists
+    if (-not (Test-Path $summaryFilePath)) {
+        # Run the dotnet command
+        dotnet GenderDebias.PerformanceEvaluation.dll prod Output "$(System.DefaultWorkingDirectory)/_GenderDebias-PullRequest/drop_linux_stage_linux_job/test_sets" 1
+        Start-Sleep -Seconds $retryDelaySeconds
+        $retryAttempts++
+    }
+    else {
+        # Summary.txt file exists, break the loop
         break
     }
-    catch [Azure.Identity.AuthenticationFailedException] {
-        if ($_.Exception.Message -eq "Azure CLI authentication timed out.") {
-            $retryAttempts++
-            $retryException = $_.Exception
-
-            Write-Host "Retry attempt $retryAttempts for exception: $($retryException.Message)"
-            Start-Sleep -Seconds $retryDelaySeconds
-        }
-        else {
-            # If it's a different exception, rethrow it to fail the task
-            throw
-        }
-    }
 }
 
-# If all retry attempts failed, throw the last exception encountered
-if ($retryAttempts -eq $retryCount -and $retryException) {
-    throw $retryException
+# If all retry attempts failed or Summary.txt file still doesn't exist, throw an error
+if (($retryAttempts -eq $retryCount -and $retryException) -or (-not (Test-Path $summaryFilePath))) {
+    throw "Failed to generate Summary.txt file."
 }
+
+$filePath = "$(System.DefaultWorkingDirectory)/_GenderDebias-PullRequest/drop_linux_stage_linux_job/PerformanceEvaluation/Output/Summary.txt"
+$fileContent = Get-Content -Path $filePath -Raw
+Write-Host $fileContent

@@ -73,5 +73,7 @@ extends:
             displayName: 'PerformanceEvaluation'
             inputs:
               script: |
-                "$(Build.SourcesDirectory)/out/PerformanceEvaluation/GenderDebias.PerformanceEvaluation.dll" prod output "$(Build.SourcesDirectory)/out/test_sets" 2
+                "$(Build.SourcesDirectory)/out/PerformanceEvaluation/GenderDebias.PerformanceEvaluation.dll" prod output "$(Build.SourcesDirectory)/out/test_sets" -1
             workingDirectory: '$(Build.SourcesDirectory)/out'
+            steps:
+

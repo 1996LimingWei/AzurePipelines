@@ -1,3 +1,4 @@
+# This yaml is used to configure the pipeline to restore and build the PerfEval project in the azure DevOps environment. 
 trigger: none
 
 variables:

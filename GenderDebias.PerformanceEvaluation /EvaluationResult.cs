@@ -167,3 +167,87 @@ namespace GenderDebias.PerformanceEvaluation
             }
             SummaryList.Add(tr);
         }
+        private void CalculateSingleCategory(string categoryPath, string posNeg, string lang)
+        {
+            string category = categoryPath.Split('\\').Last();
+            string srcPath = Path.Combine(categoryPath, "src.txt");
+            string tgtPath = Path.Combine(categoryPath, "tgt.txt");
+            string hypPath = Path.Combine(categoryPath, "hyp.txt");
+            // Note: for negative set, there is no ref.
+            string refPath = Path.Combine(categoryPath, "ref.txt");
+            bool? hypMasculine;
+            if (category.Contains("m2f"))
+                hypMasculine = false;
+            else if (category.Contains("f2m"))
+                hypMasculine = true;
+            else
+                hypMasculine = null;
+            bool negative;
+            switch (posNeg.ToLower())
+            {
+                case "pos":
+                    negative = false;
+                    break;
+                case "neg":
+                    negative = true;
+                    break;
+                default:
+                    // If there are other folders, ignore them.
+                    return;
+            }
+            CalculatePrecisionRecallAccuracy(lang, category, negative, srcPath, tgtPath, refPath, hypPath, hypMasculine);
+        }
+        public void EvalAllFiles(string WorkFolderPath)
+        {
+            foreach (string envPath in Directory.EnumerateDirectories(WorkFolderPath))
+            {
+                ErrorList = new List<string>();
+                SummaryList = new List<TestResult>();
+                foreach (string langPath in Directory.EnumerateDirectories(envPath))
+                {
+                    string DetailPath = Path.Combine(langPath, "Detail.txt");
+                    string lang = langPath.Split('\\').Last();
+                    foreach (string posNegPath in Directory.EnumerateDirectories(langPath))
+                    {
+                        string posNeg = posNegPath.Split('\\').Last();
+                        foreach (string categoryPath in Directory.EnumerateDirectories(posNegPath))
+                        {
+                            // Reach the single category folder.
+                            CalculateSingleCategory(categoryPath, posNeg, lang);
+                        }
+                    }
+                }
+
+                string summaryPath = Path.Combine(envPath, "Summary.txt");
+                GenerateReport(summaryPath);
+
+                string errorPath = Path.Combine(envPath, "Error.txt");
+                if (File.Exists(errorPath))
+                    File.Delete(errorPath);
+                if (ErrorList.Count > 0)
+                    File.WriteAllLines(errorPath, ErrorList);
+            }
+        }
+        private void GenerateReport(string reportPath)
+        {
+            List<string> list = new List<string>
+            {
+                "Language\tPos/Neg\tValidOutput\tHardError\tScoreType\tScoreValue"
+            };
+            foreach(var result in SummaryList)
+            {
+                if (result.Negative)
+                {
+                    double accuracy = (double)result.TrueNegative / result.ValidCount;
+                    list.Add($"{result.Lang}\tNegative\t{result.ValidCount}\t{result.Total - result.ValidCount}\tAccuracy\t{accuracy:0.00}");
+                }
+                else
+                {
+                    double precision = (double)result.TruePositive / (result.TruePositive + result.FalsePositive);
+                    double recall = (double)result.TruePositive / (result.TruePositive + result.FalseNegative);
+                    list.Add($"{result.Lang}\tPositive\t{result.ValidCount}\t{result.Total - result.ValidCount}\tPrecision\t{precision:0.00}");
+                    list.Add($"{result.Lang}\tPositive\t{result.ValidCount}\t{result.Total - result.ValidCount}\tRecall\t{recall:0.00}");
+                }
+            }
+            File.WriteAllLines(reportPath, list);
+        }

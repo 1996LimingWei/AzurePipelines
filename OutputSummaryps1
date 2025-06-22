@@ -1,3 +1,7 @@
+param(
+    [string]$WorkingDirectory
+)
+
 $retryCount = 3
 $retryDelaySeconds = 5
 $envList = @('prod', 'int', 'dev', 'prodeu', 'prodapc')
@@ -8,10 +12,10 @@ $summaryFilePath = $null
 while ($retryAttempts -lt $retryCount) {
     foreach ($env in $envList) {
         # Check if Summary.txt file exists
-        $summaryFilePath = "$(System.DefaultWorkingDirectory)/_GenderDebias-PullRequest/drop_linux_stage_linux_job/PerformanceEvaluation/Output/$env/Summary.txt"
+        $summaryFilePath = Join-Path $WorkingDirectory "_GenderDebias-PullRequest/drop_linux_stage_linux_job/PerformanceEvaluation/Output/$env/Summary.txt"
         if (-not (Test-Path $summaryFilePath)) {
             # Run the dotnet command
-            dotnet GenderDebias.PerformanceEvaluation.dll $env Output "$(System.DefaultWorkingDirectory)/_GenderDebias-PullRequest/drop_linux_stage_linux_job/test_sets" 2
+            dotnet GenderDebias.PerformanceEvaluation.dll $env Output "$WorkingDirectory/_GenderDebias-PullRequest/drop_linux_stage_linux_job/test_sets" 2
             Start-Sleep -Seconds $retryDelaySeconds
             $retryAttempts++
         }
@@ -32,6 +36,6 @@ if (($retryAttempts -eq $retryCount -and $retryException) -or (-not (Test-Path $
     throw "Failed to generate Summary.txt file."
 }
 
-$filePath = "$(System.DefaultWorkingDirectory)/_GenderDebias-PullRequest/drop_linux_stage_linux_job/PerformanceEvaluation/Output/Summary.txt"
+$filePath = Join-Path $WorkingDirectory "_GenderDebias-PullRequest/drop_linux_stage_linux_job/PerformanceEvaluation/Output/Summary.txt"
 $fileContent = Get-Content -Path $filePath -Raw
 Write-Host $fileContent

@@ -109,3 +109,24 @@ namespace GenderDebias.PerformanceEvaluation
 
             File.WriteAllLines(hypFilePath, hypArray);
         }
+        public void CallGenderDebiasOnTestFiles()
+        {
+            // Read the test set json file, and translate the file based on its values.
+            Console.WriteLine();
+            Console.WriteLine($"Start to test the performance on gender debias...");
+            Console.WriteLine();
+            string jsonPath = Path.Combine(Cfg.TestRootPath, "test_sets.json");
+            string jsonContent = File.ReadAllText(jsonPath);
+            var dict = Sanity.RequiresNotNoll(JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, TestSets>>>(jsonContent));
+            TopN = Cfg.TopN;
+            foreach (var languageItem in dict)
+            {
+                string lang = languageItem.Key;
+                foreach (var categoryItem in languageItem.Value)
+                {
+                    string category = categoryItem.Key;
+                    var testSets = categoryItem.Value;
+                    CallGenderDebiasOnTestFile(testSets, lang, category);
+                }
+            }
+        }
